@@ -8,7 +8,6 @@ use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterfaceFactory;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\CategoryFactory;
-use Magento\Catalog\Model\CategoryRepository;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
@@ -19,10 +18,6 @@ class CategoryTest extends TestCase
      * @var CategoryRepositoryFactory
      */
     private $categoryRepositoryFactory;
-    /**
-     * @var CategoryRepository
-     */
-    private $categoryRepository;
 
     /**
      * @var \Magento\Framework\ObjectManagerInterface
@@ -34,6 +29,9 @@ class CategoryTest extends TestCase
      */
     private $categoryFactory;
 
+    /**
+     * @inheritdoc
+     */
     protected function setUp()
     {
         parent::setUp();
@@ -97,12 +95,12 @@ class CategoryTest extends TestCase
     }
 
     /**
-     * @param string $name
-     * @param int $categoryId
      * @dataProvider categoryDataProvider
      * @magentoDbIsolation enabled
      * @magentoDataFixture Magento/Catalog/_files/myCategory.php
      * @return void
+     * @param string $name
+     * @param int $categoryId
      */
     public function testEditCategory2(string $name, int $categoryId): void
     {

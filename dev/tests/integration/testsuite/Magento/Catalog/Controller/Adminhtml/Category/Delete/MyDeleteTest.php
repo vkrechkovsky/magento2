@@ -18,6 +18,9 @@ class MyDeleteTest extends AbstractBackendController
      */
     private $categoryRepository;
 
+    /**
+     * @inheritdoc
+     */
     protected function setUp()
     {
         parent::setUp();
@@ -28,7 +31,6 @@ class MyDeleteTest extends AbstractBackendController
     /**
      * @magentoDbIsolation enabled
      * @magentoDataFixture Magento/Catalog/_files/myCategory.php
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @return void
      */
     public function testCategoryDelete(): void

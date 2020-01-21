@@ -11,10 +11,10 @@ use Magento\TestFramework\Helper\Bootstrap;
 $objectManager = Bootstrap::getObjectManager();
 /** @var Registry $registry */
 $registry = $objectManager->get(Registry::class);
-$registry->unregister('isSecureArea');
-$registry->register('isSecureArea', true);
 /** @var CategoryRepositoryInterface $categoryRepository */
 $categoryRepository = $objectManager->get(CategoryRepositoryInterface::class);
+$registry->unregister('isSecureArea');
+$registry->register('isSecureArea', true);
 try {
     $categoryRepository->deleteByIdentifier(333);
 } catch (NoSuchEntityException $e) {

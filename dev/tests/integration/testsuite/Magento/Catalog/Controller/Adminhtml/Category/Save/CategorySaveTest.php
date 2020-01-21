@@ -8,9 +8,9 @@ use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\CategoryFactory;
 use Magento\Catalog\Model\CategoryRepository;
 use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\TestCase\AbstractBackendController;
-use Magento\Framework\Serialize\Serializer\Json;
 
 /**
  * @magentoAppArea adminhtml
@@ -32,6 +32,9 @@ class CategorySaveTest extends AbstractBackendController
      */
     private $jsonSerializer;
 
+    /**
+     * @inheritdoc
+     */
     protected function setUp()
     {
         parent::setUp();
@@ -47,12 +50,10 @@ class CategorySaveTest extends AbstractBackendController
     public function testSaveCategory(): void
     {
         $postData = [
-            'path_ids' =>
-                [
+            'path_ids' => [
                     0 => '',
                 ],
-            'use_config' =>
-                [
+            'use_config' => [
                     'available_sort_by' => true,
                     'default_sort_by' => true,
                     'filter_price_range' => true,
