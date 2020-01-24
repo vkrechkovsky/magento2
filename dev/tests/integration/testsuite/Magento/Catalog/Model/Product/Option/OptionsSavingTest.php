@@ -5,23 +5,29 @@ declare(strict_types=1);
 namespace Catalog\Model\Product\Option;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
+use Magento\Catalog\Api\ProductCustomOptionRepositoryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Model\ProductRepository;
-use Magento\Framework\ObjectManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
 class OptionsSavingTest extends TestCase
 {
     /**
-     * @var ObjectManagerInterface
+     * @var ObjectManager
      */
     private $objectManager;
 
     /**
-     * @var ProductRepository
+     * @var ProductRepositoryInterface
      */
     private $productRepository;
+
+    /** @var ProductCustomOptionRepositoryInterface */
+    private $optionsRepository;
+
+    /** @var ProductCustomOptionInterfaceFactory */
+    private $optionsFactory;
 
     /**
      * @inheritdoc
@@ -30,6 +36,8 @@ class OptionsSavingTest extends TestCase
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
+        $this->optionsRepository = $this->objectManager->get(ProductCustomOptionRepositoryInterface::class);
+        $this->optionsFactory = $this->objectManager->get(ProductCustomOptionInterfaceFactory::class);
     }
 
     /**
@@ -40,24 +48,22 @@ class OptionsSavingTest extends TestCase
     public function testUpdateField(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $found = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'test_option_code_1') {
-                $found = $option;
+                $option->setTitle('Changed');
+                $option->setProductSku($product->getSku());
+                $this->optionsRepository->save($option);
+                break;
             }
         }
-        $this->assertNotNull($found);
-        $found->setTitle('Cahnged');
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $found = null;
         foreach ($options as $option) {
-            if ($option->getTitle() === 'Cahnged') {
+            if ($option->getTitle() === 'Changed') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -72,24 +78,22 @@ class OptionsSavingTest extends TestCase
     public function testUpdateArea(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $found = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'area option') {
-                $found = $option;
+                $option->setTitle('Changed');
+                $option->setProductSku($product->getSku());
+                $this->optionsRepository->save($option);
+                break;
             }
         }
-        $this->assertNotNull($found);
-        $found->setTitle('Cahnged');
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $found = null;
         foreach ($options as $option) {
-            if ($option->getTitle() === 'Cahnged') {
+            if ($option->getTitle() === 'Changed') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -104,24 +108,22 @@ class OptionsSavingTest extends TestCase
     public function testUpdateDropDown(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $found = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'drop_down option') {
-                $found = $option;
+                $option->setTitle('Changed');
+                $option->setProductSku($product->getSku());
+                $this->optionsRepository->save($option);
+                break;
             }
         }
-        $this->assertNotNull($found);
-        $found->setTitle('Cahnged');
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $found = null;
         foreach ($options as $option) {
-            if ($option->getTitle() === 'Cahnged') {
+            if ($option->getTitle() === 'Changed') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -136,21 +138,20 @@ class OptionsSavingTest extends TestCase
     public function testDeleteField(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
         $found = null;
-        foreach ($options as $key => $option) {
+        foreach ($options as $option) {
             if ($option->getTitle() === 'test_option_code_1') {
-                unset($options[$key]);
+                $this->optionsRepository->delete($option);
+                break;
             }
         }
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
-        foreach ($options as $key => $option) {
+        $options = $this->optionsRepository->getProductOptions($product);
+        foreach ($options as $option) {
             if ($option->getTitle() === 'test_option_code_1') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNull($found);
@@ -165,21 +166,20 @@ class OptionsSavingTest extends TestCase
     public function testDeleteArea(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
         $found = null;
-        foreach ($options as $key => $option) {
+        foreach ($options as $option) {
             if ($option->getTitle() === 'area option') {
-                unset($options[$key]);
+                $this->optionsRepository->delete($option);
+                break;
             }
         }
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
-        foreach ($options as $key => $option) {
+        $options = $this->optionsRepository->getProductOptions($product);
+        foreach ($options as $option) {
             if ($option->getTitle() === 'area option') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNull($found);
@@ -194,21 +194,20 @@ class OptionsSavingTest extends TestCase
     public function testDeleteDropDown(): void
     {
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
         $found = null;
-        foreach ($options as $key => $option) {
+        foreach ($options as $option) {
             if ($option->getTitle() === 'drop_down option') {
-                unset($options[$key]);
+                $this->optionsRepository->delete($option);
+                break;
             }
         }
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
-        foreach ($options as $key => $option) {
+        $options = $this->optionsRepository->getProductOptions($product);
+        foreach ($options as $option) {
             if ($option->getTitle() === 'drop_down option') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNull($found);
@@ -233,20 +232,17 @@ class OptionsSavingTest extends TestCase
                 'max_characters' => 10,
             ];
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $customOptionFactory = $this->objectManager->create(ProductCustomOptionInterfaceFactory::class);
-        $customOption = $customOptionFactory->create(['data' => $option]);
+        $customOption = $this->optionsFactory->create(['data' => $option]);
         $customOption->setProductSku($product->getSku());
-        $options[] = $customOption;
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
+        $this->optionsRepository->save($customOption);
+        $options = $this->optionsRepository->getProductOptions($product);
         $found = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'test_option_code_2') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -268,23 +264,20 @@ class OptionsSavingTest extends TestCase
             'price' => 20.0,
             'price_type' => 'percent',
             'sku' => 'sku2',
-            'max_characters' => 20
+            'max_characters' => 20,
         ];
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $customOptionFactory = $this->objectManager->create(ProductCustomOptionInterfaceFactory::class);
-        $customOption = $customOptionFactory->create(['data' => $option]);
+        $customOption = $this->optionsFactory->create(['data' => $option]);
         $customOption->setProductSku($product->getSku());
-        $options[] = $customOption;
-        $product->setOptions($options);
-        $this->productRepository->save($product);
-        $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
+        $this->optionsRepository->save($customOption);
+        $options = $this->optionsRepository->getProductOptions($product);
         $found = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'area option2') {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -305,32 +298,39 @@ class OptionsSavingTest extends TestCase
             'sort_order' => 4,
             'values' => [
                 [
-                    'title' => 'drop_down option 1',
+                    'title' => 'drop_down option value 1',
                     'price' => 10,
                     'price_type' => 'fixed',
                     'sku' => 'drop_down option 1 sku',
                     'sort_order' => 1,
-                ]
+                ],
             ],
         ];
         $product = $this->productRepository->get('simple');
-        $options = $product->getOptions();
+        $options = $this->optionsRepository->getProductOptions($product);
         $optionsQty = count($options);
-        $customOptionFactory = $this->objectManager->create(ProductCustomOptionInterfaceFactory::class);
-        $customOption = $customOptionFactory->create(['data' => $option]);
+        $customOption = $this->optionsFactory->create(['data' => $option]);
         $customOption->setProductSku($product->getSku());
-        $options[] = $customOption;
-        $product->setOptions($options);
-        $this->productRepository->save($product);
+        $this->optionsRepository->save($customOption);
         $product = $this->productRepository->get('simple', false, null, true);
-        $options = $product->getOptions();
-        $found = null;
+        $options = $this->optionsRepository->getProductOptions($product);
+        $correctOption = null;
+        $correctValue = null;
         foreach ($options as $option) {
             if ($option->getTitle() === 'drop_down option2') {
-                $found = $option;
+                $values = $option->getValues();
+                foreach ($values as $value) {
+                    if ($value->getTitle() === 'drop_down option value 1') {
+                        $correctValue = $value;
+                    };
+                    break;
+                }
+                $correctOption = $option;
+                break;
             }
         }
-        $this->assertNotNull($found);
+        $this->assertNotNull($correctOption);
+        $this->assertNotNull($correctValue);
         $this->assertCount($optionsQty+1, $options);
     }
 }

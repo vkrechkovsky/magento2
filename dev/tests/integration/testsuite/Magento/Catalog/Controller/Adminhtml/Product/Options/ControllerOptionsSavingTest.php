@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Magento\Catalog\Controller\Adminhtml\Product\Options;
 
+use Magento\Catalog\Api\ProductCustomOptionRepositoryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\Request\Http as HttpRequest;
+use Magento\Framework\Message\MessageInterface;
 use Magento\TestFramework\TestCase\AbstractBackendController;
 
 /**
@@ -13,8 +15,11 @@ use Magento\TestFramework\TestCase\AbstractBackendController;
  */
 class ControllerOptionsSavingTest extends AbstractBackendController
 {
-    /** @var ProductRepositoryInterface $productRepository */
+    /** @var ProductRepositoryInterface */
     private $productRepository;
+
+    /** @var ProductCustomOptionRepositoryInterface */
+    private $optionsRepository;
 
     /**
      * @inheritdoc
@@ -23,6 +28,74 @@ class ControllerOptionsSavingTest extends AbstractBackendController
     {
         parent::setUp();
         $this->productRepository = $this->_objectManager->create(ProductRepositoryInterface::class);
+        $this->optionsRepository = $this->_objectManager->get(ProductCustomOptionRepositoryInterface::class);
+    }
+
+    /**
+     * @magentoDataFixture Magento/Catalog/_files/my_product_with_options.php
+     * @magentoDbIsolation enabled
+     * @dataProvider titlesDataProvider
+     * @param $title
+     * @return void
+     */
+    public function testUpdateCustomOptions( $title): void
+    {
+        $optionId = null;
+        $valueId = null;
+        $changedOption = null;
+        $product = $this->productRepository->get('simple');
+        //$options = $this->optionsRepository->getProductOptions($product);
+        $postData = ['product' => $product->getData()];
+        $options = $postData['product']['options'];
+
+        foreach ($options as $key => $option) {
+            if ($option->getTitle()===$title){
+                $option->setTitle('changed');
+                $optionId = $key;
+                break;
+            }
+        }
+
+        $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
+        $this->getRequest()->setPostValue($postData);
+        $this->dispatch('backend/catalog/product/save/id/' . $product->getEntityId());
+        $this->assertSessionMessages(
+            $this->contains((string)__('You saved the product.')),
+            MessageInterface::TYPE_SUCCESS
+        );
+        $product = $this->productRepository->get('simple', false, null, true);
+        $options = $this->optionsRepository->getProductOptions($product);
+        $correct = false;
+        foreach ($options as $option) {
+            if ($option->getOptionId()==$optionId && $option->getTitle()=='changed') {
+                $correct = true;
+                if ($option->getType()=='drop_down') {
+                    $values = $option->getValues();
+                    foreach ($values as $value) {
+                        if ($value->getTitle()=='drop_down option 1 changed') {
+                            $correct = true;
+                        } else {
+                            $correct = false;
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        $this->assertTrue($correct);
+    }
+
+    /**
+     * @return string
+     */
+    public function titlesDataProvider()
+    {
+        return [
+            //'Update Field' => ['field' => 'test_option_code_1'],
+            //'Update Area' => ['area' => 'area option'],
+            'Update Drop Down' => ['DropDown' => 'drop_down option'],
+            ];
     }
 
     /**
@@ -38,14 +111,18 @@ class ControllerOptionsSavingTest extends AbstractBackendController
         $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
         $this->getRequest()->setPostValue($postData);
         $this->dispatch('backend/catalog/product/save/id/' . $product->getEntityId());
+        $this->assertSessionMessages(
+            $this->contains((string)__('You saved the product.')),
+            MessageInterface::TYPE_SUCCESS
+        );
         $product = $this->productRepository->get('simple', false, null, true);
-        $this->assertNotNull($product);
-        $options = $product->getOptions();
-        $newtitle = $postData['product']['options'][0]['title'];
+        $options = $this->optionsRepository->getProductOptions($product);
+        $newTitle = $postData['product']['options'][0]['title'];
         $found = null;
         foreach ($options as $option) {
-            if ($option->getTitle() === $newtitle) {
+            if ($option->getTitle() === $newTitle) {
                 $found = $option;
+                break;
             }
         }
         $this->assertNotNull($found);
@@ -65,11 +142,11 @@ class ControllerOptionsSavingTest extends AbstractBackendController
                                 'type' => 'field',
                                 'title' => 'opt3',
                                 'price' => 1.00,
-                                'price_type' => 'fixed'
-                            ]
-                        ]
-                    ]
-                ]
+                                'price_type' => 'fixed',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'Create Area' => [
                 'area' => [
@@ -79,11 +156,11 @@ class ControllerOptionsSavingTest extends AbstractBackendController
                                 'type' => 'area',
                                 'title' => 'area3',
                                 'price' => 1.00,
-                                'price_type' => 'fixed'
-                            ]
-                        ]
-                    ]
-                ]
+                                'price_type' => 'fixed',
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'Create DropDown' => [
                 'DropDown' => [
@@ -109,12 +186,12 @@ class ControllerOptionsSavingTest extends AbstractBackendController
                                         'sku' => 'drop_down option 2 sku',
                                         'sort_order' => 2,
                                     ],
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -127,14 +204,18 @@ class ControllerOptionsSavingTest extends AbstractBackendController
     {
         $postData = [
             'product' => [
-                'options' => [ [] ]
-            ]
+                'options' => [],
+            ],
         ];
         $product = $this->productRepository->get('simple');
         $this->getRequest()->setMethod(HttpRequest::METHOD_POST);
         $this->getRequest()->setPostValue($postData);
         $this->dispatch('backend/catalog/product/save/id/' . $product->getEntityId());
+        $this->assertSessionMessages(
+            $this->contains('You saved the product.'),
+            MessageInterface::TYPE_SUCCESS
+        );
         $product = $this->productRepository->get('simple', false, null, true);
-        $this->assertCount(0, $product->getOptions());
+        $this->assertCount(0, $this->optionsRepository->getProductOptions($product));
     }
 }

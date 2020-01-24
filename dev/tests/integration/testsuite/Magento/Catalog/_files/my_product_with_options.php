@@ -8,20 +8,31 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
 use Magento\Catalog\Model\Product\Visibility;
-use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\TestFramework\ObjectManager;
+use Magento\TestFramework\Store\StoreManager;
 
-/** @var \Magento\Framework\ObjectManagerInterface $objectManager */
-$objectManager = Bootstrap::getObjectManager();
+$objectManager = ObjectManager::getInstance();
+
+/** @var WebsiteRepositoryInterface $websiteRepository */
+$websiteRepository = $objectManager->get(WebsiteRepositoryInterface::class);
+
+
+/** @var ProductRepositoryInterface $productRepository */
+$productRepository = $objectManager->get(ProductRepositoryInterface::class);
 
 /** @var Product $product*/
 $product = $objectManager->create(Product::class);
+
+/** @var ProductCustomOptionInterfaceFactory $customOptionFactory */
+$customOptionFactory = $objectManager->create(ProductCustomOptionInterfaceFactory::class);
 
 $product->setTypeId(
     Type::TYPE_SIMPLE
 )->setAttributeSetId(
     $product->getDefaultAttributeSetId()
 )->setWebsiteIds(
-    [1]
+    [$websiteRepository->get('base')->getId()]
 )->setName(
     'Simple Product With Custom Options'
 )->setSku(
@@ -58,6 +69,7 @@ $options = [
         'price_type' => 'fixed',
         'sku' => 'sku1',
         'max_characters' => 10,
+        'product_sku' => 'simple',
     ],
     [
         'title' => 'area option',
@@ -67,7 +79,8 @@ $options = [
         'price' => 20.0,
         'price_type' => 'percent',
         'sku' => 'sku2',
-        'max_characters' => 20
+        'max_characters' => 20,
+        'product_sku' => 'simple',
     ],
     [
         'title' => 'file option',
@@ -79,14 +92,15 @@ $options = [
         'sku' => 'sku3',
         'file_extension' => 'jpg, png, gif',
         'image_size_x' => 10,
-        'image_size_y' => 20
-
+        'image_size_y' => 20,
+        'product_sku' => 'simple',
     ],
     [
         'title' => 'drop_down option',
         'type' => 'drop_down',
         'is_require' => true,
         'sort_order' => 4,
+        'product_sku' => 'simple',
         'values' => [
             [
                 'title' => 'drop_down option 1',
@@ -109,6 +123,7 @@ $options = [
         'type' => 'radio',
         'is_require' => true,
         'sort_order' => 5,
+        'product_sku' => 'simple',
         'values' => [
             [
                 'title' => 'radio option 1',
@@ -131,6 +146,7 @@ $options = [
         'type' => 'checkbox',
         'is_require' => true,
         'sort_order' => 6,
+        'product_sku' => 'simple',
         'values' => [
             [
                 'title' => 'checkbox option 1',
@@ -153,6 +169,7 @@ $options = [
         'type' => 'multiple',
         'is_require' => true,
         'sort_order' => 7,
+        'product_sku' => 'simple',
         'values' => [
             [
                 'title' => 'multiple option 1',
@@ -177,7 +194,8 @@ $options = [
         'price_type' => 'fixed',
         'sku' => 'date option sku',
         'is_require' => true,
-        'sort_order' => 8
+        'sort_order' => 8,
+        'product_sku' => 'simple',
     ],
     [
         'title' => 'date_time option',
@@ -186,7 +204,8 @@ $options = [
         'price_type' => 'fixed',
         'is_require' => true,
         'sort_order' => 9,
-        'sku' => 'date_time option sku'
+        'sku' => 'date_time option sku',
+        'product_sku' => 'simple',
     ],
     [
         'title' => 'time option',
@@ -195,24 +214,18 @@ $options = [
         'price_type' => 'fixed',
         'is_require' => true,
         'sku' => 'time option sku',
-        'sort_order' => 10
+        'sort_order' => 10,
+        'product_sku' => 'simple',
     ]
 ];
 
 $customOptions = [];
-
-/** @var ProductCustomOptionInterfaceFactory $customOptionFactory */
-$customOptionFactory = $objectManager->create(ProductCustomOptionInterfaceFactory::class);
-
 foreach ($options as $option) {
+
     /** @var \Magento\Catalog\Api\Data\ProductCustomOptionInterface $customOption */
     $customOption = $customOptionFactory->create(['data' => $option]);
     $customOption->setProductSku($product->getSku());
     $customOptions[] = $customOption;
 }
-
 $product->setOptions($customOptions);
-
-/** @var ProductRepositoryInterface $productRepository */
-$productRepository = $objectManager->get(ProductRepositoryInterface::class);
 $productRepository->save($product);
